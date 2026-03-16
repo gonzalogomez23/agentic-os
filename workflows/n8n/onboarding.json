@@ -1,0 +1,149 @@
+{
+  "name": "Onboarding Gimnasio",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "onboarding"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "title": "={{ $('Webhook').item.json.body.nombre }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Email|email",
+              "emailValue": "={{ $('Webhook').item.json.body.email }}"
+            },
+            {
+              "key": "Teléfono|phone_number",
+              "phoneValue": "={{ $('Webhook').item.json.body.telefono }}"
+            },
+            {
+              "key": "Fecha de nacimiento|date",
+              "date": "={{ $('Webhook').item.json.body.fecha_nacimiento }}"
+            },
+            {
+              "key": "Membresía|select",
+              "selectValue": "={{ $('Webhook').item.json.body.membresia }}"
+            },
+            {
+              "key": "Objetivo|select",
+              "selectValue": "={{ $('Webhook').item.json.body.objetivo }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notion-create",
+      "name": "Notion - Crear Ficha",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [500, 300],
+      "credentials": {
+        "notionApi": {
+          "id": "",
+          "name": "Notion API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "",
+        "toEmail": "={{ $('Webhook').item.json.body.email }}",
+        "subject": "=¡Bienvenido/a al gimnasio, {{ $('Webhook').item.json.body.nombre }}!",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;\">\n  <div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;\">\n    <h1 style=\"color: white; margin: 0;\">¡Bienvenido/a!</h1>\n  </div>\n  <div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">\n    <p style=\"font-size: 16px;\">Hola <strong>{{ $('Webhook').item.json.body.nombre }}</strong>,</p>\n    <p>Nos alegra mucho que te hayas unido a nuestro gimnasio. Aquí tienes un resumen de tu inscripción:</p>\n    <table style=\"width: 100%; border-collapse: collapse; margin: 20px 0;\">\n      <tr style=\"background: #eee;\"><td style=\"padding: 10px; font-weight: bold;\">Membresía</td><td style=\"padding: 10px;\">{{ $('Webhook').item.json.body.membresia }}</td></tr>\n      <tr><td style=\"padding: 10px; font-weight: bold;\">Objetivo</td><td style=\"padding: 10px;\">{{ $('Webhook').item.json.body.objetivo }}</td></tr>\n    </table>\n    <h3>Horarios</h3>\n    <p>Lunes a Viernes: 7:00 - 22:00<br>Sábados: 8:00 - 20:00<br>Domingos: 9:00 - 14:00</p>\n    <h3>Contacto</h3>\n    <p>Email: info@gimnasio.com<br>Teléfono: +34 600 000 000</p>\n    <hr style=\"border: none; border-top: 1px solid #ddd; margin: 20px 0;\">\n    <p style=\"color: #888; font-size: 12px; text-align: center;\">Este es un email automático. No respondas a este mensaje.</p>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "smtp-send",
+      "name": "Email SMTP - Bienvenida",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [750, 300],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "Gmail SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "",
+        "text": "=🏋️ *Nuevo socio registrado*\n\n👤 *Nombre:* {{ $('Webhook').item.json.body.nombre }}\n📧 *Email:* {{ $('Webhook').item.json.body.email }}\n📱 *Teléfono:* {{ $('Webhook').item.json.body.telefono }}\n🎯 *Objetivo:* {{ $('Webhook').item.json.body.objetivo }}\n💳 *Membresía:* {{ $('Webhook').item.json.body.membresia }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-notify",
+      "name": "Telegram - Notificar",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1000, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Notion - Crear Ficha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Crear Ficha": {
+      "main": [
+        [
+          {
+            "node": "Email SMTP - Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email SMTP - Bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Notificar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

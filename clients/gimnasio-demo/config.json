@@ -1,0 +1,37 @@
+{
+  "business": {
+    "name": "Gimnasio Demo",
+    "type": "gimnasio",
+    "timezone": "Europe/Dublin",
+    "locale": "es-ES"
+  },
+  "branding": {
+    "primaryColor": "#4f46e5",
+    "formTitle": "Registro de Membresía",
+    "formSubtitle": "Completa tus datos para comenzar tu experiencia en el gimnasio.",
+    "welcomeEmailSubject": "¡Bienvenido/a al gimnasio, {{nombre}}!"
+  },
+  "form": {
+    "fields": {
+      "telefono": { "required": false },
+      "fecha_nacimiento": { "required": true }
+    },
+    "memberships": ["Mensual", "Trimestral", "Anual"],
+    "goals": ["Perder peso", "Ganar músculo", "Recomposición corporal", "Otro"]
+  },
+  "n8n": {
+    "webhookPath": "onboarding",
+    "notionDatabaseId": "",
+    "telegramChatId": "",
+    "fromEmail": ""
+  },
+  "contact": {
+    "email": "info@gimnasio.com",
+    "phone": "+34 600 000 000",
+    "schedule": {
+      "weekdays": "7:00 - 22:00",
+      "saturday": "8:00 - 20:00",
+      "sunday": "9:00 - 14:00"
+    }
+  }
+}
