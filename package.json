@@ -8,6 +8,8 @@
     "n8n:down": "docker compose -f workflows/n8n/docker-compose.yml down",
     "n8n:logs": "docker compose -f workflows/n8n/docker-compose.yml logs -f n8n",
     "form:serve": "npx serve apps/form -l 3000",
-    "new-client": "bash scripts/new-client.sh"
+    "new-client": "bash scripts/new-client.sh",
+    "agent:dev": "node --watch apps/telegram-agent/src/index.js",
+    "agent:start": "node apps/telegram-agent/src/index.js"
   }
 }
