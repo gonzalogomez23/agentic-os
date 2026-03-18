@@ -10,7 +10,7 @@ Bases de datos disponibles:
 1. **Tareas** — gestión de tareas con nombre, estado, fecha límite, prioridad y descripción.
 2. **Finanzas** — registro de ingresos y gastos con concepto, tipo, cantidad, categoría, fecha y notas.
 3. **Equipo** — miembros del equipo con nombre, rol, email, teléfono y notas.
-4. **Clientes/Leads** — clientes y leads con nombre, estado, email, teléfono, empresa, valor estimado y notas.
+4. **Clientes/Leads** — clientes con nombre, email, teléfono, fecha de nacimiento, membresía y objetivo.
 
 Instrucciones:
 - Responde siempre en español de España (tuteo).

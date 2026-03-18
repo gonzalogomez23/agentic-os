@@ -65,16 +65,19 @@ export const schemas = {
     title: 'Nombre',
     properties: {
       nombre: { type: 'title', notion_name: 'Nombre' },
-      estado: {
-        type: 'select',
-        notion_name: 'Estado',
-        options: ['Lead', 'Contactado', 'Negociación', 'Cliente', 'Perdido'],
-      },
       email: { type: 'email', notion_name: 'Email' },
       telefono: { type: 'phone_number', notion_name: 'Teléfono' },
-      empresa: { type: 'rich_text', notion_name: 'Empresa' },
-      valor: { type: 'number', notion_name: 'Valor estimado' },
-      notas: { type: 'rich_text', notion_name: 'Notas' },
+      fecha_nacimiento: { type: 'date', notion_name: 'Fecha de nacimiento' },
+      membresia: {
+        type: 'select',
+        notion_name: 'Membresía',
+        options: ['Mensual', 'Trimestral', 'Anual'],
+      },
+      objetivo: {
+        type: 'select',
+        notion_name: 'Objetivo',
+        options: ['Perder peso', 'Ganar músculo', 'Recomposición corporal', 'Otro'],
+      },
     },
   },
 };
