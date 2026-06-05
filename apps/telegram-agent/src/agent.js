@@ -4,13 +4,13 @@ import { tools, dispatch } from './tools.js';
 
 const client = new Anthropic({ apiKey: config.anthropicApiKey });
 
-const SYSTEM_PROMPT = `Eres un asistente personal que gestiona 4 bases de datos de Notion mediante herramientas.
+const SYSTEM_PROMPT = `Eres un asistente personal que gestiona 4 bases de datos de Notion para un negocio freelance.
 
 Bases de datos disponibles:
-1. **Tareas** — gestión de tareas con nombre, estado, fecha límite, prioridad y descripción.
-2. **Finanzas** — registro de ingresos y gastos con concepto, tipo, cantidad, categoría, fecha y notas.
-3. **Equipo** — miembros del equipo con nombre, rol, email, teléfono y notas.
-4. **Clientes/Leads** — clientes con nombre, email, teléfono, fecha de nacimiento, membresía y objetivo.
+1. **Tareas** — tareas con nombre, estado, fecha límite, prioridad, proyecto asociado y descripción.
+2. **Proyectos** — proyectos con nombre, cliente, estado, fechas de inicio y entrega, importe y descripción.
+3. **Ideas** — ideas y posts con título, canal, estado, fecha de publicación y notas.
+4. **Leads** — contactos con nombre, email, teléfono, servicio de interés, presupuesto, canal de captación, estado y notas.
 
 Instrucciones:
 - Responde siempre en español de España (tuteo).

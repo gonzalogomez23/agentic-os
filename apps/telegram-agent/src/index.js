@@ -33,19 +33,20 @@ bot.command('start', async (ctx) => {
 
 bot.command('ayuda', async (ctx) => {
   await ctx.reply(
-    `Puedo gestionar 4 bases de datos de Notion:
+    `Gestiono 4 bases de datos de Notion para tu negocio freelance:
 
 📋 *Tareas* — crear, listar, actualizar, completar, eliminar
-💰 *Finanzas* — registrar ingresos y gastos
-👥 *Equipo* — gestionar miembros del equipo
-🤝 *Clientes/Leads* — seguimiento de clientes
+📁 *Proyectos* — seguimiento de proyectos con cliente, estado e importe
+💡 *Ideas* — captura de ideas y posts para redes o blog
+🤝 *Leads* — contactos interesados en tus servicios
 
 *Ejemplos:*
-• "Crea una tarea para llamar al fontanero mañana"
-• "Lista mis tareas pendientes"
-• "Apunta un gasto de 50 euros en material de oficina"
-• "Añade un lead: María García, empresa Acme, email maria@acme.com"
-• "Marca como completada la tarea del fontanero"
+• "Crea una tarea para revisar la propuesta del cliente Acme, vence el viernes"
+• "Lista mis tareas en curso"
+• "Añade un proyecto: Web Acme, cliente Acme S.L., importe 2000€"
+• "Tengo una idea para un post de LinkedIn sobre productividad freelance"
+• "Añade un lead: Ana López, email ana@acme.com, interesada en diseño web"
+• "Marca el proyecto Web Acme como entregado"
 
 Puedes enviar texto o notas de voz.`,
     { parse_mode: 'Markdown' },

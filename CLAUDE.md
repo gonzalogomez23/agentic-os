@@ -1,50 +1,62 @@
-# CLAUDE.md — automation-hub
+# CLAUDE.md — agentic-os
 
 ## Idioma
 
 Todo el texto visible para el usuario (UI, mensajes, documentación, comentarios) debe estar en **español de España** (tuteo, no voseo). Evitar formas argentinas como "completá", "seleccioná" — usar "completa", "selecciona", "inténtalo". Prefijo telefónico por defecto: +34.
 
+El código fuente se mantiene en inglés.
+
+## Qué es este proyecto
+
+Asistente IA personal para gestionar un negocio freelance. Dos aplicaciones:
+
+- **telegram-agent** — bot de Telegram que interpreta mensajes de texto y voz con Claude y ejecuta acciones en Notion (crear tareas, proyectos, ideas, leads).
+- **webhook** — servidor Express que recibe el POST del formulario de contacto del portfolio y guarda el lead en Notion.
+
 ## Arquitectura
 
-Monorepo para sistemas de automatización de procesos, replicable por cliente.
-
 ```
-automation-hub/
-├── apps/form/        # Formulario vanilla HTML/CSS/JS (sin build)
-├── workflows/n8n/    # Docker Compose + workflows JSON importables
-├── clients/          # Configuración por cliente (config.json + .env)
-├── packages/config/  # Utilidad para cargar/validar config de cliente
-└── scripts/          # Herramientas de scaffolding
+agentic-os/
+├── apps/
+│   ├── telegram-agent/   # Bot de Telegram + agente Claude + Notion
+│   └── webhook/          # Servidor Express para leads del portfolio
+├── package.json
+└── pnpm-workspace.yaml
 ```
 
-### Flujo
+### Flujo del agente
 
 ```
-Form (localhost:3000) → POST → n8n (localhost:5678) → Notion + Gmail SMTP + Telegram
+Telegram (texto o voz) → transcripción (Groq Whisper) → Claude (tool use) → Notion
+```
+
+### Flujo del webhook
+
+```
+Portfolio (POST /leads) → webhook → Notion (DB Leads)
 ```
 
 ## Comandos
 
 ```bash
-pnpm n8n:up        # Arrancar n8n
-pnpm n8n:down      # Parar n8n
-pnpm n8n:logs      # Ver logs de n8n
-pnpm form:serve    # Servir formulario en localhost:3000
-pnpm new-client    # Crear nuevo cliente desde plantilla
+pnpm agent:dev      # Arrancar el agente en modo watch
+pnpm agent:start    # Arrancar el agente en producción
+pnpm webhook:dev    # Arrancar el webhook en modo watch
+pnpm webhook:start  # Arrancar el webhook en producción
 ```
 
-## Multi-cliente
+## Bases de datos de Notion
 
-Cada cliente tiene su directorio en `clients/` con:
-- `config.json` — configuración del negocio (branding, horarios, opciones del formulario, IDs de n8n)
-- `.env` — secretos (tokens de Notion, Telegram, SMTP). Nunca se sube a git.
+Definidas en `apps/telegram-agent/src/schema.js`:
 
-Plantilla base en `clients/_template/`. Crear nuevo cliente: `bash scripts/new-client.sh <nombre>`.
+- **Tareas** — nombre, estado, fecha límite, prioridad, proyecto, descripción
+- **Proyectos** — nombre, cliente, estado, fecha inicio, fecha entrega, importe, descripción
+- **Ideas** — título, canal, estado, fecha de publicación, notas
+- **Leads** — nombre, email, teléfono, presupuesto, canal, estado, notas
 
 ## Convenciones
 
-- El formulario NO usa framework ni bundler — son 4 ficheros estáticos.
-- `config.js` en el form contiene `CONFIG.WEBHOOK_URL` y textos de branding.
-- Los workflows de n8n están en `workflows/n8n/` (son infra, no apps).
-- Las credenciales de n8n se configuran en la UI, no en ficheros.
+- Los IDs de las DBs de Notion van en `.env`, nunca en el código.
 - Ficheros `.env` van en `.gitignore`. Usar `.env.example` como referencia.
+- Para añadir una nueva DB: añadir su schema en `schema.js` y su ID en `config.js` + `.env.example`. El resto (tools, CRUD) se genera automáticamente.
+- No usar n8n ni Docker para la lógica propia — todo es Node.js.

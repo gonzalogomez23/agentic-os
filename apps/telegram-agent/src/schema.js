@@ -1,83 +1,51 @@
-/**
- * Esquemas de las 4 bases de datos de Notion.
- *
- * Modifica este fichero cuando cambien las propiedades de tus DBs.
- * Cada DB define:
- *   - title: nombre de la propiedad título
- *   - properties: { nombreCampo: { type, notion_name, options? } }
- *
- * Los tipos soportados: title, rich_text, number, select, multi_select,
- * date, checkbox, url, email, phone_number, status
- */
-
 export const schemas = {
   tareas: {
     title: 'Nombre',
     properties: {
-      nombre: { type: 'title', notion_name: 'Nombre' },
-      estado: {
-        type: 'status',
-        notion_name: 'Estado',
-        options: ['Sin empezar', 'En curso', 'Completada'],
-      },
-      fecha_limite: { type: 'date', notion_name: 'Fecha límite' },
-      prioridad: {
-        type: 'select',
-        notion_name: 'Prioridad',
-        options: ['Alta', 'Media', 'Baja'],
-      },
+      nombre:      { type: 'title',     notion_name: 'Nombre' },
+      estado:      { type: 'status',    notion_name: 'Estado',       options: ['Sin empezar', 'En curso', 'Completada'] },
+      fecha_limite:{ type: 'date',      notion_name: 'Fecha límite' },
+      prioridad:   { type: 'select',    notion_name: 'Prioridad',    options: ['Alta', 'Media', 'Baja'] },
+      proyecto:    { type: 'rich_text', notion_name: 'Proyecto' },
       descripcion: { type: 'rich_text', notion_name: 'Descripción' },
     },
   },
 
-  finanzas: {
-    title: 'Concepto',
+  proyectos: {
+    title: 'Nombre',
     properties: {
-      concepto: { type: 'title', notion_name: 'Concepto' },
-      tipo: {
-        type: 'select',
-        notion_name: 'Tipo',
-        options: ['Ingreso', 'Gasto'],
-      },
-      cantidad: { type: 'number', notion_name: 'Cantidad' },
-      categoria: {
-        type: 'select',
-        notion_name: 'Categoría',
-        options: ['Material', 'Servicios', 'Nóminas', 'Ventas', 'Otros'],
-      },
-      fecha: { type: 'date', notion_name: 'Fecha' },
-      notas: { type: 'rich_text', notion_name: 'Notas' },
+      nombre:        { type: 'title',     notion_name: 'Nombre' },
+      cliente:       { type: 'rich_text', notion_name: 'Cliente' },
+      estado:        { type: 'select',    notion_name: 'Estado',         options: ['Propuesta', 'En curso', 'Entregado', 'Archivado'] },
+      fecha_inicio:  { type: 'date',      notion_name: 'Fecha de inicio' },
+      fecha_entrega: { type: 'date',      notion_name: 'Fecha de entrega' },
+      importe:       { type: 'number',    notion_name: 'Importe' },
+      descripcion:   { type: 'rich_text', notion_name: 'Descripción' },
     },
   },
 
-  equipo: {
-    title: 'Nombre',
+  ideas: {
+    title: 'Título',
     properties: {
-      nombre: { type: 'title', notion_name: 'Nombre' },
-      rol: { type: 'select', notion_name: 'Rol', options: [] },
-      email: { type: 'email', notion_name: 'Email' },
-      telefono: { type: 'phone_number', notion_name: 'Teléfono' },
-      notas: { type: 'rich_text', notion_name: 'Notas' },
+      titulo:           { type: 'title',     notion_name: 'Título' },
+      canal:            { type: 'select',    notion_name: 'Canal',              options: ['Blog', 'LinkedIn', 'Instagram', 'YouTube', 'Otro'] },
+      estado:           { type: 'select',    notion_name: 'Estado',             options: ['Idea', 'Redactando', 'Programado', 'Publicado'] },
+      fecha_publicacion:{ type: 'date',      notion_name: 'Fecha de publicación' },
+      notas:            { type: 'rich_text', notion_name: 'Notas' },
     },
   },
 
-  clientes: {
+  leads: {
     title: 'Nombre',
     properties: {
-      nombre: { type: 'title', notion_name: 'Nombre' },
-      email: { type: 'email', notion_name: 'Email' },
-      telefono: { type: 'phone_number', notion_name: 'Teléfono' },
-      fecha_nacimiento: { type: 'date', notion_name: 'Fecha de nacimiento' },
-      membresia: {
-        type: 'select',
-        notion_name: 'Membresía',
-        options: ['Mensual', 'Trimestral', 'Anual'],
-      },
-      objetivo: {
-        type: 'select',
-        notion_name: 'Objetivo',
-        options: ['Perder peso', 'Ganar músculo', 'Recomposición corporal', 'Otro'],
-      },
+      nombre:    { type: 'title',        notion_name: 'Nombre' },
+      email:     { type: 'email',        notion_name: 'Email' },
+      telefono:  { type: 'phone_number', notion_name: 'Teléfono' },
+      servicio:  { type: 'select',       notion_name: 'Servicio',   options: ['Diseño web', 'SEO', 'Consultoría', 'Otro'] },
+      presupuesto:{ type: 'rich_text',   notion_name: 'Presupuesto' },
+      canal:     { type: 'select',       notion_name: 'Canal',      options: ['Portfolio', 'Referido', 'LinkedIn', 'Otro'] },
+      estado:    { type: 'select',       notion_name: 'Estado',     options: ['Nuevo', 'Contactado', 'Propuesta enviada', 'Cerrado', 'Descartado'] },
+      notas:     { type: 'rich_text',    notion_name: 'Notas' },
     },
   },
 };

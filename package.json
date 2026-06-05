@@ -1,15 +1,12 @@
 {
-  "name": "automation-hub",
+  "name": "agentic-os",
   "version": "0.1.0",
   "private": true,
-  "description": "Monorepo para sistemas de automatización de procesos",
+  "description": "Asistente IA personal para negocio freelance",
   "scripts": {
-    "n8n:up": "docker compose -f workflows/n8n/docker-compose.yml up -d",
-    "n8n:down": "docker compose -f workflows/n8n/docker-compose.yml down",
-    "n8n:logs": "docker compose -f workflows/n8n/docker-compose.yml logs -f n8n",
-    "form:serve": "npx serve apps/form -l 3000",
-    "new-client": "bash scripts/new-client.sh",
-    "agent:dev": "node --watch apps/telegram-agent/src/index.js",
-    "agent:start": "node apps/telegram-agent/src/index.js"
+    "agent:dev":     "node --watch apps/telegram-agent/src/index.js",
+    "agent:start":   "node apps/telegram-agent/src/index.js",
+    "webhook:dev":   "node --watch apps/webhook/src/server.js",
+    "webhook:start": "node apps/webhook/src/server.js"
   }
 }

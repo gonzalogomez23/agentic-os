@@ -1,7 +1,0 @@
-{
-  "name": "@automation-hub/config",
-  "version": "0.1.0",
-  "private": true,
-  "main": "index.js",
-  "description": "Utilidad para cargar y validar configuración de cliente"
-}
