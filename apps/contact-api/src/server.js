@@ -34,6 +34,7 @@ if (!process.env.CORS_ORIGINS) {
   console.warn('ADVERTENCIA: CORS_ORIGINS no configurado. En producción establece CORS_ORIGINS=https://tuportfolio.com');
 }
 
+app.set('trust proxy', 1);
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10kb' }));
 
