@@ -3,7 +3,12 @@ import { Body, Container, Head, Hr, Html, Img, Link, Preview, Row, Column, Secti
 const LOGO_URL = 'https://www.gonzalogomezdev.com/logo/gonzalo-gomez-logo.png';
 const SITE_URL = 'https://gonzalogomezdev.com';
 export function NewLeadEmail({ nombre, email, telefono, mensaje }) {
-    return (_jsxs(Html, { lang: "es", children: [_jsx(Head, {}), _jsxs(Preview, { children: ["Nuevo contacto de ", nombre, " \u2014 ", email] }), _jsx(Body, { style: body, children: _jsxs(Container, { style: container, children: [_jsx(Section, { style: { padding: '0', margin: '0' }, children: _jsx(Row, { children: _jsx(Column, { style: { backgroundColor: ACCENT, height: '4px', lineHeight: '4px', fontSize: '1px' }, children: "\u00A0" }) }) }), _jsx(Section, { style: logoSection, children: _jsx(Img, { src: LOGO_URL, alt: "Gonzalo G\u00F3mez", height: 38, style: { display: 'block', margin: '0 auto' } }) }), _jsx(Hr, { style: divider }), _jsxs(Section, { style: contentSection, children: [_jsx(Section, { style: { marginBottom: '20px' }, children: _jsxs(Row, { children: [_jsx(Column, { style: { width: '16px', verticalAlign: 'middle' }, children: _jsx("div", { style: dot }) }), _jsx(Column, { style: { verticalAlign: 'middle' }, children: _jsx(Text, { style: eyebrow, children: "Nuevo contacto \u00B7 Portfolio" }) })] }) }), _jsx(Field, { label: "Nombre", value: nombre }), _jsx(Field, { label: "Email", value: email, link: `mailto:${email}` }), telefono && _jsx(Field, { label: "Tel\u00E9fono", value: telefono, link: `tel:${telefono}` }), mensaje && _jsx(Field, { label: "Mensaje", value: mensaje, multiline: true })] }), _jsx(Hr, { style: divider }), _jsx(Section, { style: footerSection, children: _jsxs(Text, { style: footer, children: ["Recibido desde el formulario de contacto de", ' ', _jsx(Link, { href: SITE_URL, style: footerLink, children: "gonzalogomezdev.com" })] }) })] }) })] }));
+    return (_jsxs(Html, { lang: "es", children: [_jsx(Head, { children: _jsx("style", { children: `
+          :root, body { color-scheme: light only; }
+          body, table, td, th, div, p, a { color-scheme: light only; }
+          body { background-color: ${BG_PAGE} !important; }
+          table { background-color: #ffffff !important; }
+        ` }) }), _jsxs(Preview, { children: ["Nuevo contacto de ", nombre, " \u2014 ", email] }), _jsx(Body, { style: body, children: _jsxs(Container, { style: container, children: [_jsx(Section, { style: { padding: '0', margin: '0' }, children: _jsx(Row, { children: _jsx(Column, { style: { backgroundColor: ACCENT, height: '4px', lineHeight: '4px', fontSize: '1px' }, children: "\u00A0" }) }) }), _jsx(Section, { style: logoSection, children: _jsx(Img, { src: LOGO_URL, alt: "Gonzalo G\u00F3mez", height: 38, style: { display: 'block', margin: '0 auto' } }) }), _jsx(Hr, { style: divider }), _jsxs(Section, { style: contentSection, children: [_jsx(Section, { style: { marginBottom: '20px' }, children: _jsxs(Row, { children: [_jsx(Column, { style: { width: '16px', verticalAlign: 'middle' }, children: _jsx("div", { style: dot }) }), _jsx(Column, { style: { verticalAlign: 'middle' }, children: _jsx(Text, { style: eyebrow, children: "Nuevo contacto \u00B7 Portfolio" }) })] }) }), _jsx(Field, { label: "Nombre", value: nombre }), _jsx(Field, { label: "Email", value: email, link: `mailto:${email}` }), telefono && _jsx(Field, { label: "Tel\u00E9fono", value: telefono, link: `tel:${telefono}` }), mensaje && _jsx(Field, { label: "Mensaje", value: mensaje, multiline: true })] }), _jsx(Hr, { style: divider }), _jsx(Section, { style: footerSection, children: _jsxs(Text, { style: footer, children: ["Recibido desde el formulario de contacto de", ' ', _jsx(Link, { href: SITE_URL, style: footerLink, children: "gonzalogomezdev.com" })] }) })] }) })] }));
 }
 function Field({ label, value, multiline, link, }) {
     return (_jsxs(Section, { style: fieldCard, children: [_jsx(Text, { style: fieldLabel, children: label }), link ? (_jsx(Link, { href: link, style: fieldValueLink, children: value })) : (_jsx(Text, { style: multiline ? fieldValueMultiline : fieldValue, children: value }))] }));
@@ -33,6 +38,7 @@ const container = {
 const logoSection = {
     padding: '28px 32px 24px',
     textAlign: 'center',
+    backgroundColor: '#ffffff',
 };
 const divider = {
     borderColor: BORDER,
@@ -41,6 +47,7 @@ const divider = {
 };
 const contentSection = {
     padding: '32px 32px 20px',
+    backgroundColor: '#ffffff',
 };
 const dot = {
     width: '8px',
@@ -94,6 +101,7 @@ const fieldValueMultiline = {
 };
 const footerSection = {
     padding: '16px 32px 20px',
+    backgroundColor: '#ffffff',
 };
 const footer = {
     fontSize: '12px',

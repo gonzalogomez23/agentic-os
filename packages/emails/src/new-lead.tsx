@@ -27,7 +27,14 @@ const SITE_URL = 'https://gonzalogomezdev.com';
 export function NewLeadEmail({ nombre, email, telefono, mensaje }: NewLeadEmailProps) {
   return (
     <Html lang="es">
-      <Head />
+      <Head>
+        <style>{`
+          :root, body { color-scheme: light only; }
+          body, table, td, th, div, p, a { color-scheme: light only; }
+          body { background-color: ${BG_PAGE} !important; }
+          table { background-color: #ffffff !important; }
+        `}</style>
+      </Head>
       <Preview>Nuevo contacto de {nombre} — {email}</Preview>
       <Body style={body}>
         <Container style={container}>
@@ -144,6 +151,7 @@ const container: React.CSSProperties = {
 const logoSection: React.CSSProperties = {
   padding: '28px 32px 24px',
   textAlign: 'center',
+  backgroundColor: '#ffffff',
 };
 
 const divider: React.CSSProperties = {
@@ -154,6 +162,7 @@ const divider: React.CSSProperties = {
 
 const contentSection: React.CSSProperties = {
   padding: '32px 32px 20px',
+  backgroundColor: '#ffffff',
 };
 
 const dot: React.CSSProperties = {
@@ -215,6 +224,7 @@ const fieldValueMultiline: React.CSSProperties = {
 
 const footerSection: React.CSSProperties = {
   padding: '16px 32px 20px',
+  backgroundColor: '#ffffff',
 };
 
 const footer: React.CSSProperties = {
