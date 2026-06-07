@@ -3,6 +3,7 @@ node_modules/
 
 # Build
 apps/*/dist/
+packages/emails/preview.html
 .react-email/
 
 # Environment variables

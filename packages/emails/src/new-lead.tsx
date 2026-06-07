@@ -2,10 +2,13 @@ import {
   Body,
   Container,
   Head,
-  Heading,
   Hr,
   Html,
+  Img,
+  Link,
   Preview,
+  Row,
+  Column,
   Section,
   Text,
 } from '@react-email/components';
@@ -18,87 +21,210 @@ interface NewLeadEmailProps {
   mensaje?: string;
 }
 
+const LOGO_URL = 'https://www.gonzalogomezdev.com/logo/gonzalo-gomez-logo.png';
+const SITE_URL = 'https://gonzalogomezdev.com';
+
 export function NewLeadEmail({ nombre, email, telefono, mensaje }: NewLeadEmailProps) {
   return (
     <Html lang="es">
       <Head />
-      <Preview>Nuevo lead de {nombre} — {email}</Preview>
+      <Preview>Nuevo contacto de {nombre} — {email}</Preview>
       <Body style={body}>
         <Container style={container}>
-          <Heading style={heading}>Nuevo lead del portfolio</Heading>
-          <Hr style={hr} />
-          <Section style={section}>
-            <Field label="Nombre" value={nombre} />
-            <Field label="Email" value={email} />
-            {telefono && <Field label="Teléfono" value={telefono} />}
-            {mensaje && <Field label="Mensaje" value={mensaje} multiline />}
+
+          {/* Franja de acento superior */}
+          <Section style={{ padding: '0', margin: '0' }}>
+            <Row>
+              <Column style={{ backgroundColor: ACCENT, height: '4px', lineHeight: '4px', fontSize: '1px' }}>
+                &nbsp;
+              </Column>
+            </Row>
           </Section>
+
+          {/* Cabecera con logo */}
+          <Section style={logoSection}>
+            <Img
+              src={LOGO_URL}
+              alt="Gonzalo Gómez"
+              height={38}
+              style={{ display: 'block', margin: '0 auto' }}
+            />
+          </Section>
+
+          <Hr style={divider} />
+
+          {/* Contenido principal */}
+          <Section style={contentSection}>
+
+            {/* Etiqueta */}
+            <Section style={{ marginBottom: '20px' }}>
+              <Row>
+                <Column style={{ width: '16px', verticalAlign: 'middle' }}>
+                  <div style={dot} />
+                </Column>
+                <Column style={{ verticalAlign: 'middle' }}>
+                  <Text style={eyebrow}>Nuevo contacto · Portfolio</Text>
+                </Column>
+              </Row>
+            </Section>
+
+            {/* Campos */}
+            <Field label="Nombre" value={nombre} />
+            <Field label="Email" value={email} link={`mailto:${email}`} />
+            {telefono && <Field label="Teléfono" value={telefono} link={`tel:${telefono}`} />}
+            {mensaje && <Field label="Mensaje" value={mensaje} multiline />}
+
+          </Section>
+
+          {/* Pie */}
+          <Hr style={divider} />
+          <Section style={footerSection}>
+            <Text style={footer}>
+              Recibido desde el formulario de contacto de{' '}
+              <Link href={SITE_URL} style={footerLink}>gonzalogomezdev.com</Link>
+            </Text>
+          </Section>
+
         </Container>
       </Body>
     </Html>
   );
 }
 
-function Field({ label, value, multiline }: { label: string; value: string; multiline?: boolean }) {
+function Field({
+  label,
+  value,
+  multiline,
+  link,
+}: {
+  label: string;
+  value: string;
+  multiline?: boolean;
+  link?: string;
+}) {
   return (
-    <Section style={fieldRow}>
+    <Section style={fieldCard}>
       <Text style={fieldLabel}>{label}</Text>
-      <Text style={multiline ? fieldValueMultiline : fieldValue}>{value}</Text>
+      {link ? (
+        <Link href={link} style={fieldValueLink}>{value}</Link>
+      ) : (
+        <Text style={multiline ? fieldValueMultiline : fieldValue}>{value}</Text>
+      )}
     </Section>
   );
 }
 
+// ─── Tokens ────────────────────────────────────────────────────────────────
+
+const DARK_BLUE = '#102132';
+const DIM       = '#4D6478';
+const FAINT     = '#9BAEBB';
+const BORDER    = '#D8DCE2';
+const BG_PAGE   = '#F0F2F4';
+const BG_FIELD  = '#F7F9FB';
+const ACCENT    = DARK_BLUE;
+const FONT      = '"Helvetica Neue", Arial, sans-serif';
+
+// ─── Estilos ───────────────────────────────────────────────────────────────
+
 const body: React.CSSProperties = {
-  backgroundColor: '#f4f4f5',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  backgroundColor: BG_PAGE,
+  fontFamily: FONT,
+  margin: '0',
+  padding: '0',
 };
 
 const container: React.CSSProperties = {
-  maxWidth: '520px',
+  maxWidth: '560px',
   margin: '40px auto',
   backgroundColor: '#ffffff',
-  borderRadius: '8px',
-  padding: '32px',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  border: `1px solid ${BORDER}`,
 };
 
-const heading: React.CSSProperties = {
-  fontSize: '20px',
+const logoSection: React.CSSProperties = {
+  padding: '28px 32px 24px',
+  textAlign: 'center',
+};
+
+const divider: React.CSSProperties = {
+  borderColor: BORDER,
+  borderTopWidth: '1px',
+  margin: '0',
+};
+
+const contentSection: React.CSSProperties = {
+  padding: '32px 32px 20px',
+};
+
+const dot: React.CSSProperties = {
+  width: '8px',
+  height: '8px',
+  borderRadius: '50%',
+  backgroundColor: ACCENT,
+  display: 'inline-block',
+};
+
+const eyebrow: React.CSSProperties = {
+  fontSize: '11px',
   fontWeight: '600',
-  color: '#111',
-  margin: '0 0 16px',
+  color: DIM,
+  textTransform: 'uppercase',
+  letterSpacing: '0.1em',
+  margin: '0',
+  paddingLeft: '6px',
 };
 
-const hr: React.CSSProperties = {
-  borderColor: '#e4e4e7',
-  margin: '0 0 24px',
-};
-
-const section: React.CSSProperties = {
-  gap: '0',
-};
-
-const fieldRow: React.CSSProperties = {
-  marginBottom: '16px',
+const fieldCard: React.CSSProperties = {
+  backgroundColor: BG_FIELD,
+  borderLeft: `3px solid ${BORDER}`,
+  padding: '12px 16px',
+  marginBottom: '8px',
 };
 
 const fieldLabel: React.CSSProperties = {
-  fontSize: '11px',
-  fontWeight: '600',
-  color: '#71717a',
+  fontSize: '10px',
+  fontWeight: '700',
+  color: FAINT,
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  margin: '0 0 2px',
+  letterSpacing: '0.1em',
+  margin: '0 0 4px',
 };
 
 const fieldValue: React.CSSProperties = {
   fontSize: '15px',
-  color: '#18181b',
+  color: DARK_BLUE,
   margin: '0',
+  lineHeight: '1.5',
+};
+
+const fieldValueLink: React.CSSProperties = {
+  fontSize: '15px',
+  color: DARK_BLUE,
+  textDecoration: 'underline',
+  textDecorationColor: BORDER,
+  display: 'block',
+  lineHeight: '1.5',
 };
 
 const fieldValueMultiline: React.CSSProperties = {
   ...fieldValue,
   whiteSpace: 'pre-wrap',
-  lineHeight: '1.6',
+  lineHeight: '1.7',
+  color: DIM,
+};
+
+const footerSection: React.CSSProperties = {
+  padding: '16px 32px 20px',
+};
+
+const footer: React.CSSProperties = {
+  fontSize: '12px',
+  color: FAINT,
+  margin: '0',
+  textAlign: 'center',
+};
+
+const footerLink: React.CSSProperties = {
+  color: FAINT,
+  textDecoration: 'underline',
 };

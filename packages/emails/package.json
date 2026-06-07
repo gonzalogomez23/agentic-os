@@ -7,16 +7,17 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "email dev --dir src --port 3030"
+    "dev": "tsx preview.ts && start preview.html"
   },
   "dependencies": {
-    "@react-email/components": "^0.0.35",
+    "@react-email/components": "^1.0.12",
     "@react-email/render": "^1.0.2",
     "react": "^19.0.0"
   },
   "devDependencies": {
+    "@react-email/ui": "^6.5.0",
     "@types/react": "^19.0.0",
-    "react-email": "^3.0.5",
+    "react-email": "^6.5.0",
     "typescript": "^5.4.5"
   }
 }
