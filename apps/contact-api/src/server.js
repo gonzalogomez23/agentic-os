@@ -6,6 +6,7 @@ dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '..', '.e
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Client } from '@notionhq/client';
 import { Resend } from 'resend';
@@ -27,15 +28,16 @@ const PORT = process.env.PORT || 3001;
 
 const app = express();
 
+if (!process.env.CORS_ORIGINS && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: CORS_ORIGINS no configurado en producción. El servidor se detiene.');
+  process.exit(1);
+}
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
-  : true;
-
-if (!process.env.CORS_ORIGINS) {
-  console.warn('ADVERTENCIA: CORS_ORIGINS no configurado. En producción establece CORS_ORIGINS=https://tuportfolio.com');
-}
+  : ['http://localhost:3000', 'http://localhost:3001'];
 
 app.set('trust proxy', 1);
+app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10kb' }));
 
@@ -47,7 +49,7 @@ const contactLimiter = rateLimit({
   message: { ok: false, error: 'Demasiadas solicitudes. Inténtalo más tarde.' },
 });
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -65,6 +67,9 @@ app.post('/contact', contactLimiter, async (req, res) => {
   }
   if (mensaje && mensaje.length > 3000) {
     return res.status(400).json({ ok: false, error: 'mensaje demasiado largo' });
+  }
+  if (telefono && telefono.trim().length > 20) {
+    return res.status(400).json({ ok: false, error: 'teléfono inválido' });
   }
 
   try {
@@ -86,11 +91,11 @@ app.post('/contact', contactLimiter, async (req, res) => {
         subject: `Nuevo lead: ${nombre.trim()}`,
         html,
       }))
-      .catch((err) => console.error('Error al enviar email de notificación:', err.message));
+      .catch((err) => console.error('Error al enviar email de notificación:', String(err.message).slice(0, 200)));
 
     res.json({ ok: true });
   } catch (err) {
-    console.error('Error al crear lead en Notion:', err.message);
+    console.error('Error al crear lead en Notion:', String(err.message).slice(0, 200));
     res.status(500).json({ ok: false, error: 'Error interno' });
   }
 });

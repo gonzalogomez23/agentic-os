@@ -19,3 +19,12 @@ Thumbs.db
 
 # Agent conversation history
 apps/telegram-agent/data/
+
+# Logs
+*.log
+
+# Audio temporal (telegram-agent)
+*.ogg
+*.wav
+*.mp3
+*.opus

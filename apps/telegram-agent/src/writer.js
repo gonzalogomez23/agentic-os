@@ -18,7 +18,7 @@ export async function draftWithGPT(prompt, context) {
   const response = await openai.chat.completions.create({
     model: config.gptModel,
     messages,
-  });
+  }, { timeout: 30_000 });
 
   return { draft: response.choices[0].message.content };
 }

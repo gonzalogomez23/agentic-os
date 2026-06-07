@@ -12,9 +12,31 @@ function isAllowed(ctx) {
   return ctx.from?.id === config.allowedUser;
 }
 
+const MESSAGE_LIMIT = 20;
+const WINDOW_MS     = 60_000;
+const rateBuckets   = new Map();
+
+function checkRateLimit(chatId) {
+  const now  = Date.now();
+  const slot = rateBuckets.get(chatId) ?? { count: 0, windowStart: now };
+  if (now - slot.windowStart > WINDOW_MS) { slot.count = 0; slot.windowStart = now; }
+  slot.count++;
+  rateBuckets.set(chatId, slot);
+  return slot.count <= MESSAGE_LIMIT;
+}
+
+// NUNCA loguear el valor de retorno — contiene el bot token
+function telegramFileUrl(filePath) {
+  return `https://api.telegram.org/file/bot${config.telegramToken}/${filePath}`;
+}
+
 bot.use(async (ctx, next) => {
   if (!isAllowed(ctx)) {
     await ctx.reply('No tienes permiso para usar este bot.');
+    return;
+  }
+  if (!checkRateLimit(ctx.from.id)) {
+    await ctx.reply('Demasiados mensajes seguidos. Espera un momento.');
     return;
   }
   await next();
@@ -57,7 +79,7 @@ bot.on('message:voice', async (ctx) => {
 
   try {
     const file = await ctx.getFile();
-    const fileUrl = `https://api.telegram.org/file/bot${config.telegramToken}/${file.file_path}`;
+    const fileUrl = telegramFileUrl(file.file_path);
     const text = await transcribe(fileUrl);
 
     await ctx.api.editMessageText(
@@ -81,7 +103,7 @@ bot.on('message:photo', async (ctx) => {
   try {
     const photo   = ctx.message.photo.at(-1);
     const file    = await ctx.api.getFile(photo.file_id);
-    const fileUrl = `https://api.telegram.org/file/bot${config.telegramToken}/${file.file_path}`;
+    const fileUrl = telegramFileUrl(file.file_path);
 
     const res    = await fetch(fileUrl);
     const buffer = await res.arrayBuffer();

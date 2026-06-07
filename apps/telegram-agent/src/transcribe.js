@@ -5,9 +5,15 @@ import { config } from './config.js';
  * @param {string} fileUrl — URL del fichero OGG desde la API de Telegram
  * @returns {Promise<string>} — Texto transcrito
  */
+function fetchWithTimeout(url, options = {}, ms = 30_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 export async function transcribe(fileUrl) {
   // Descargar el audio desde Telegram
-  const audioResponse = await fetch(fileUrl);
+  const audioResponse = await fetchWithTimeout(fileUrl);
   if (!audioResponse.ok) {
     throw new Error(`Error descargando audio: ${audioResponse.status}`);
   }
@@ -21,7 +27,7 @@ export async function transcribe(fileUrl) {
   formData.append('language', 'es');
 
   // Enviar a Groq Whisper API
-  const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+  const response = await fetchWithTimeout('https://api.groq.com/openai/v1/audio/transcriptions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${config.groqApiKey}`,

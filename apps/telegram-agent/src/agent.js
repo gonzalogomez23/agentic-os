@@ -77,7 +77,7 @@ export async function runAgent(userText, chatId, image = null) {
       system: buildSystemPrompt(),
       tools,
       messages,
-    });
+    }, { timeout: 60_000 });
 
     if (response.stop_reason === 'end_turn') {
       const textBlocks = response.content.filter((b) => b.type === 'text');
@@ -108,10 +108,11 @@ export async function runAgent(userText, chatId, image = null) {
           content: JSON.stringify(result),
         });
       } catch (err) {
+        console.error(`[tool:${toolUse.name}] error:`, err.message);
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: `Error: ${err.message}`,
+          content: 'La herramienta falló con un error interno.',
           is_error: true,
         });
       }
