@@ -20,6 +20,8 @@ agentic-os/
 ├── apps/
 │   ├── telegram-agent/   # Bot de Telegram + agente Claude + Notion
 │   └── contact-api/      # Servidor Express para leads del portfolio
+├── packages/
+│   └── emails/           # Plantillas de email con React Email (compartidas)
 ├── package.json
 └── pnpm-workspace.yaml
 ```
@@ -45,10 +47,12 @@ Portfolio (POST /contact) → contact-api → Notion (DB Leads) + Email
 ## Comandos
 
 ```bash
-pnpm agent:dev      # Arrancar el agente en modo watch
-pnpm agent:start    # Arrancar el agente en producción
+pnpm agent:dev          # Arrancar el agente en modo watch
+pnpm agent:start        # Arrancar el agente en producción
 pnpm contact-api:dev    # Arrancar la contact-api en modo watch
 pnpm contact-api:start  # Arrancar la contact-api en producción
+pnpm emails:dev         # Servidor de previsualización de emails (localhost:3030)
+pnpm emails:build       # Compilar plantillas — ejecutar antes de hacer push si se han modificado
 ```
 
 ## Bases de datos de Notion

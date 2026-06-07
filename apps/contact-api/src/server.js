@@ -9,6 +9,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { Client } from '@notionhq/client';
 import { Resend } from 'resend';
+import { NewLeadEmail, render } from '@agentic-os/emails';
 
 const REQUIRED = ['NOTION_API_KEY', 'NOTION_DB_CONTACTS', 'RESEND_API_KEY', 'TO_EMAIL', 'FROM_EMAIL'];
 const missing = REQUIRED.filter((k) => !process.env[k]);
@@ -78,12 +79,14 @@ app.post('/contact', contactLimiter, async (req, res) => {
       },
     });
 
-    resend.emails.send({
-      from: FROM_EMAIL,
-      to: TO_EMAIL,
-      subject: `Nuevo lead: ${nombre.trim()}`,
-      html: buildEmailHtml({ nombre, email, telefono, mensaje }),
-    }).catch((err) => console.error('Error al enviar email de notificación:', err.message));
+    render(NewLeadEmail({ nombre: nombre.trim(), email: email.trim(), telefono: telefono?.trim(), mensaje: mensaje?.trim() }))
+      .then((html) => resend.emails.send({
+        from: FROM_EMAIL,
+        to: TO_EMAIL,
+        subject: `Nuevo lead: ${nombre.trim()}`,
+        html,
+      }))
+      .catch((err) => console.error('Error al enviar email de notificación:', err.message));
 
     res.json({ ok: true });
   } catch (err) {
@@ -92,26 +95,6 @@ app.post('/contact', contactLimiter, async (req, res) => {
   }
 });
 
-function buildEmailHtml({ nombre, email, telefono, mensaje }) {
-  const rows = [
-    ['Nombre', nombre?.trim()],
-    ['Email', email?.trim()],
-    telefono?.trim() ? ['Teléfono', telefono.trim()] : null,
-    mensaje?.trim() ? ['Mensaje', mensaje.trim().replace(/\n/g, '<br>')] : null,
-  ].filter(Boolean);
-
-  const rowsHtml = rows
-    .map(([label, value]) => `<tr><td style="padding:6px 12px;font-weight:600;color:#555;white-space:nowrap">${label}</td><td style="padding:6px 12px;color:#222">${value}</td></tr>`)
-    .join('');
-
-  return `
-    <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
-      <h2 style="color:#111;margin-bottom:4px">Nuevo lead del portfolio</h2>
-      <table style="width:100%;border-collapse:collapse;margin-top:16px;background:#f9f9f9;border-radius:8px">
-        ${rowsHtml}
-      </table>
-    </div>`;
-}
 
 app.listen(PORT, () => {
   console.log(`Contact API escuchando en http://localhost:${PORT}`);

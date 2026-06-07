@@ -7,6 +7,8 @@
     "agent:dev":     "node --watch apps/telegram-agent/src/index.js",
     "agent:start":   "node apps/telegram-agent/src/index.js",
     "contact-api:dev":   "node --watch apps/contact-api/src/server.js",
-    "contact-api:start": "node apps/contact-api/src/server.js"
+    "contact-api:start": "node apps/contact-api/src/server.js",
+    "emails:dev":        "pnpm --filter @agentic-os/emails dev",
+    "emails:build":      "pnpm --filter @agentic-os/emails build"
   }
 }

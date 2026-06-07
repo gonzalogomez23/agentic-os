@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Build
+apps/*/dist/
+.react-email/
+
 # Environment variables
 .env
 
