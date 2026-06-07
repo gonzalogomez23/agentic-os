@@ -10,7 +10,7 @@ import rateLimit from 'express-rate-limit';
 import { Client } from '@notionhq/client';
 import { Resend } from 'resend';
 
-const REQUIRED = ['NOTION_API_KEY', 'NOTION_DB_CONTACTS', 'RESEND_API_KEY', 'TO_EMAIL'];
+const REQUIRED = ['NOTION_API_KEY', 'NOTION_DB_CONTACTS', 'RESEND_API_KEY', 'TO_EMAIL', 'FROM_EMAIL'];
 const missing = REQUIRED.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`Faltan variables de entorno: ${missing.join(', ')}`);
@@ -21,7 +21,7 @@ const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const resend = new Resend(process.env.RESEND_API_KEY);
 const DB_LEADS = process.env.NOTION_DB_CONTACTS;
 const TO_EMAIL = process.env.TO_EMAIL;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'leads@notifications.gonzalogomez.dev';
+const FROM_EMAIL = process.env.FROM_EMAIL;
 const PORT = process.env.PORT || 3001;
 
 const app = express();
@@ -114,5 +114,5 @@ function buildEmailHtml({ nombre, email, telefono, mensaje }) {
 }
 
 app.listen(PORT, () => {
-  console.log(`Webhook escuchando en http://localhost:${PORT}`);
+  console.log(`Contact API escuchando en http://localhost:${PORT}`);
 });
