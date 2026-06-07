@@ -1,17 +1,16 @@
 import { Bot } from 'grammy';
+import { Client } from '@notionhq/client';
 import { config } from './config.js';
+import { loadSchemas } from './schema.js';
+import { initTools } from './tools.js';
 import { transcribe } from './transcribe.js';
 import { runAgent } from './agent.js';
 
 const bot = new Bot(config.telegramToken);
 
-/* ── Verificación de usuario ── */
-
 function isAllowed(ctx) {
   return ctx.from?.id === config.allowedUser;
 }
-
-/* ── Middleware: rechazar usuarios no autorizados ── */
 
 bot.use(async (ctx, next) => {
   if (!isAllowed(ctx)) {
@@ -21,50 +20,46 @@ bot.use(async (ctx, next) => {
   await next();
 });
 
-/* ── Comando /start ── */
-
 bot.command('start', async (ctx) => {
   await ctx.reply(
     '¡Hola! Soy tu asistente personal. Envíame una nota de voz o un mensaje de texto y gestionaré tus bases de datos de Notion.\n\nEscribe /ayuda para ver lo que puedo hacer.',
   );
 });
 
-/* ── Comando /ayuda ── */
-
 bot.command('ayuda', async (ctx) => {
   await ctx.reply(
-    `Gestiono 4 bases de datos de Notion para tu negocio freelance:
+    `Soy tu asistente personal para gestionar tu negocio freelance.
 
-📋 *Tareas* — crear, listar, actualizar, completar, eliminar
-📁 *Proyectos* — seguimiento de proyectos con cliente, estado e importe
-💡 *Ideas* — captura de ideas y posts para redes o blog
-🤝 *Leads* — contactos interesados en tus servicios
+Bases de datos de Notion:
+• Tareas — crea, lista y actualiza trabajo pendiente
+• Proyectos — seguimiento de clientes, fechas e importes
+• Contenido — ideas y programación de posts y vídeos
+• Conocimiento — notas y aprendizajes personales
+• Contactos — leads y personas de interés
 
-*Ejemplos:*
+Redacción con IA:
+• "Escríbeme un post de LinkedIn sobre productividad freelance"
+• "Redacta un email de seguimiento para el cliente Acme"
+• "Guarda el borrador en la idea X de Notion"
+
+Otros ejemplos:
 • "Crea una tarea para revisar la propuesta del cliente Acme, vence el viernes"
 • "Lista mis tareas en curso"
 • "Añade un proyecto: Web Acme, cliente Acme S.L., importe 2000€"
-• "Tengo una idea para un post de LinkedIn sobre productividad freelance"
-• "Añade un lead: Ana López, email ana@acme.com, interesada en diseño web"
 • "Marca el proyecto Web Acme como entregado"
 
-Puedes enviar texto o notas de voz.`,
-    { parse_mode: 'Markdown' },
+Puedes enviar texto, notas de voz o imágenes.`,
   );
 });
-
-/* ── Handler de notas de voz ── */
 
 bot.on('message:voice', async (ctx) => {
   const processingMsg = await ctx.reply('🎙️ Procesando nota de voz...');
 
   try {
-    // Obtener URL del fichero de audio
     const file = await ctx.getFile();
     const fileUrl = `https://api.telegram.org/file/bot${config.telegramToken}/${file.file_path}`;
-
-    // Transcribir
     const text = await transcribe(fileUrl);
+
     await ctx.api.editMessageText(
       ctx.chat.id,
       processingMsg.message_id,
@@ -72,39 +67,53 @@ bot.on('message:voice', async (ctx) => {
       { parse_mode: 'Markdown' },
     );
 
-    // Ejecutar agente
-    const reply = await runAgent(text);
+    const reply = await runAgent(text, ctx.chat.id);
     await ctx.api.editMessageText(ctx.chat.id, processingMsg.message_id, reply);
   } catch (err) {
     console.error('Error procesando nota de voz:', err);
-    await ctx.api.editMessageText(
-      ctx.chat.id,
-      processingMsg.message_id,
-      `Error: ${err.message}`,
-    );
+    await ctx.api.editMessageText(ctx.chat.id, processingMsg.message_id, 'Hubo un error. Inténtalo de nuevo.');
   }
 });
 
-/* ── Handler de mensajes de texto ── */
+bot.on('message:photo', async (ctx) => {
+  const processingMsg = await ctx.reply('Procesando imagen...');
+
+  try {
+    const photo   = ctx.message.photo.at(-1);
+    const file    = await ctx.api.getFile(photo.file_id);
+    const fileUrl = `https://api.telegram.org/file/bot${config.telegramToken}/${file.file_path}`;
+
+    const res    = await fetch(fileUrl);
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const caption = ctx.message.caption || 'Analiza esta imagen y dime qué ves.';
+
+    const reply = await runAgent(caption, ctx.chat.id, {
+      type: 'image', base64, mediaType: 'image/jpeg',
+    });
+    await ctx.api.editMessageText(ctx.chat.id, processingMsg.message_id, reply);
+  } catch (err) {
+    console.error('Error procesando imagen:', err);
+    await ctx.api.editMessageText(ctx.chat.id, processingMsg.message_id, 'Hubo un error. Inténtalo de nuevo.');
+  }
+});
 
 bot.on('message:text', async (ctx) => {
   const processingMsg = await ctx.reply('Procesando...');
 
   try {
-    const reply = await runAgent(ctx.message.text);
+    const reply = await runAgent(ctx.message.text, ctx.chat.id);
     await ctx.api.editMessageText(ctx.chat.id, processingMsg.message_id, reply);
   } catch (err) {
     console.error('Error procesando mensaje:', err);
-    await ctx.api.editMessageText(
-      ctx.chat.id,
-      processingMsg.message_id,
-      `Error: ${err.message}`,
-    );
+    await ctx.api.editMessageText(ctx.chat.id, processingMsg.message_id, 'Hubo un error. Inténtalo de nuevo.');
   }
 });
 
-/* ── Arrancar bot ── */
+/* ── Inicialización ── */
 
-bot.start({
-  onStart: () => console.log('Bot de Telegram iniciado'),
-});
+const notion = new Client({ auth: config.notionApiKey });
+await loadSchemas(notion, config.notionDbs);
+initTools();
+
+bot.start({ onStart: () => console.log('Bot de Telegram iniciado') });

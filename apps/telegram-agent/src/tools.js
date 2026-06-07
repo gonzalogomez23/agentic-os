@@ -1,7 +1,6 @@
 import { schemas } from './schema.js';
-import { createPage, queryDatabase, updatePage, archivePage } from './notion.js';
-
-/* ── Genera las propiedades como JSON Schema para Claude ── */
+import { createPage, queryDatabase, updatePage, archivePage, appendPageContent, getPageContent } from './notion.js';
+import { draftWithGPT } from './writer.js';
 
 function propsToSchema(dbKey, includeId) {
   const schema = schemas[dbKey];
@@ -26,9 +25,7 @@ function propsToSchema(dbKey, includeId) {
       case 'status':
       case 'select':
         prop.type = 'string';
-        if (def.options?.length) {
-          prop.enum = def.options;
-        }
+        if (def.options?.length) prop.enum = def.options;
         break;
       case 'number':
         prop.type = 'number';
@@ -39,9 +36,7 @@ function propsToSchema(dbKey, includeId) {
       case 'multi_select':
         prop.type = 'array';
         prop.items = { type: 'string' };
-        if (def.options?.length) {
-          prop.items.enum = def.options;
-        }
+        if (def.options?.length) prop.items.enum = def.options;
         break;
       default:
         prop.type = 'string';
@@ -53,61 +48,41 @@ function propsToSchema(dbKey, includeId) {
   return { props, required };
 }
 
-/* ── Definiciones de tools para Claude ── */
-
-const DB_NAMES = {
-  tareas: 'Tareas',
-  finanzas: 'Finanzas',
-  equipo: 'Equipo',
-  clientes: 'Clientes/Leads',
-};
-
 function makeTools() {
   const tools = [];
 
-  for (const [dbKey, dbLabel] of Object.entries(DB_NAMES)) {
+  for (const [dbKey, schema] of Object.entries(schemas)) {
+    const label = schema.label || dbKey;
     const { props: createProps } = propsToSchema(dbKey, false);
     const { props: updateProps } = propsToSchema(dbKey, true);
-    const titleField = schemas[dbKey].title;
+    const titleField = schema.title;
 
-    // CREATE
     tools.push({
       name: `create_${dbKey}`,
-      description: `Crea un registro en la base de datos ${dbLabel} de Notion.`,
+      description: `Crea un registro en la base de datos ${label} de Notion.`,
       input_schema: {
         type: 'object',
         properties: createProps,
-        required: [Object.keys(schemas[dbKey].properties)[0]],
+        required: [Object.keys(schema.properties)[0]],
       },
     });
 
-    // LIST
     tools.push({
       name: `list_${dbKey}`,
-      description: `Lista registros de la base de datos ${dbLabel}. Puedes filtrar por texto (búsqueda en ${titleField}) o por una propiedad concreta.`,
+      description: `Lista registros de ${label}. Puedes filtrar por texto (búsqueda en ${titleField}) o por una propiedad concreta.`,
       input_schema: {
         type: 'object',
         properties: {
-          search: {
-            type: 'string',
-            description: `Texto a buscar en el campo ${titleField}`,
-          },
-          property: {
-            type: 'string',
-            description: 'Nombre del campo por el que filtrar (ej: estado, prioridad)',
-          },
-          value: {
-            type: 'string',
-            description: 'Valor exacto del filtro',
-          },
+          search: { type: 'string', description: `Texto a buscar en el campo ${titleField}` },
+          property: { type: 'string', description: 'Nombre del campo por el que filtrar' },
+          value: { type: 'string', description: 'Valor exacto del filtro' },
         },
       },
     });
 
-    // UPDATE
     tools.push({
       name: `update_${dbKey}`,
-      description: `Actualiza un registro existente en ${dbLabel}. Necesitas el page_id (obtenlo con list_${dbKey} primero).`,
+      description: `Actualiza un registro existente en ${label}. Necesitas el page_id (obtenlo con list_${dbKey} primero).`,
       input_schema: {
         type: 'object',
         properties: updateProps,
@@ -115,56 +90,89 @@ function makeTools() {
       },
     });
 
-    // DELETE
     tools.push({
       name: `delete_${dbKey}`,
-      description: `Archiva (elimina) un registro de ${dbLabel}. Necesitas el page_id.`,
+      description: `Archiva (elimina) un registro de ${label}. Necesitas el page_id.`,
       input_schema: {
         type: 'object',
         properties: {
-          page_id: {
-            type: 'string',
-            description: 'ID de la página a archivar',
-          },
+          page_id: { type: 'string', description: 'ID de la página a archivar' },
         },
         required: ['page_id'],
       },
     });
   }
 
+  tools.push({
+    name: 'draft_content',
+    description: 'Usa GPT para redactar contenido: posts de LinkedIn/Instagram, emails, copy de web, newsletters... Describe qué quieres redactar y el modelo especializado lo escribirá.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        prompt:  { type: 'string', description: 'Qué redactar: tipo de contenido, tono, longitud, plataforma' },
+        context: { type: 'string', description: 'Contexto opcional: tema, audiencia, ejemplos de estilo propio' },
+      },
+      required: ['prompt'],
+    },
+  });
+
+  tools.push({
+    name: 'write_page_content',
+    description: 'Añade contenido (texto, párrafos, listas) al cuerpo de una página de Notion. Usa markdown: # para títulos, - para listas, > para citas.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        page_id: { type: 'string', description: 'ID de la página de Notion' },
+        content: { type: 'string', description: 'Texto en markdown a guardar en la página' },
+      },
+      required: ['page_id', 'content'],
+    },
+  });
+
+  tools.push({
+    name: 'read_page_content',
+    description: 'Lee el cuerpo (bloques de texto) de una página de Notion.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        page_id: { type: 'string', description: 'ID de la página de Notion' },
+      },
+      required: ['page_id'],
+    },
+  });
+
   return tools;
 }
 
-export const tools = makeTools();
+export let tools = [];
 
-/* ── Dispatcher: ejecuta la tool y devuelve resultado ── */
+export function initTools() {
+  tools = makeTools();
+}
 
 export async function dispatch(name, input) {
-  // Extraer dbKey y acción del nombre (ej: create_tareas → create, tareas)
+  if (name === 'draft_content')      return draftWithGPT(input.prompt, input.context);
+  if (name === 'write_page_content') return appendPageContent(input.page_id, input.content);
+  if (name === 'read_page_content')  return getPageContent(input.page_id);
+
   const match = name.match(/^(create|list|update|delete)_(\w+)$/);
   if (!match) throw new Error(`Tool desconocida: ${name}`);
 
   const [, action, dbKey] = match;
 
   switch (action) {
-    case 'create': {
-      const result = await createPage(dbKey, input);
-      return result;
-    }
+    case 'create':
+      return createPage(dbKey, input);
     case 'list': {
       const results = await queryDatabase(dbKey, input);
-      if (results.length === 0) return { message: 'No se encontraron registros.' };
-      return results;
+      return results.length === 0 ? { message: 'No se encontraron registros.' } : results;
     }
     case 'update': {
       const { page_id, ...data } = input;
-      const result = await updatePage(dbKey, page_id, data);
-      return result;
+      return updatePage(dbKey, page_id, data);
     }
-    case 'delete': {
-      const result = await archivePage(input.page_id);
-      return result;
-    }
+    case 'delete':
+      return archivePage(input.page_id);
     default:
       throw new Error(`Acción desconocida: ${action}`);
   }

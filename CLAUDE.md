@@ -11,7 +11,7 @@ El código fuente se mantiene en inglés.
 Asistente IA personal para gestionar un negocio freelance. Dos aplicaciones:
 
 - **telegram-agent** — bot de Telegram que interpreta mensajes de texto y voz con Claude y ejecuta acciones en Notion (crear tareas, proyectos, ideas, leads).
-- **webhook** — servidor Express que recibe el POST del formulario de contacto del portfolio y guarda el lead en Notion.
+- **contact-api** — servidor Express que recibe el POST del formulario de contacto del portfolio y guarda el lead en Notion.
 
 ## Arquitectura
 
@@ -19,21 +19,27 @@ Asistente IA personal para gestionar un negocio freelance. Dos aplicaciones:
 agentic-os/
 ├── apps/
 │   ├── telegram-agent/   # Bot de Telegram + agente Claude + Notion
-│   └── webhook/          # Servidor Express para leads del portfolio
+│   └── contact-api/      # Servidor Express para leads del portfolio
 ├── package.json
 └── pnpm-workspace.yaml
 ```
+
+### Agentes y modelos
+
+- **Claude** (claude-haiku-4-5) — organizador: interpreta peticiones, gestiona Notion (CRUD)
+- **GPT** (gpt-4o-mini) — redactor: posts, emails, copy, newsletters (tool `draft_content`)
 
 ### Flujo del agente
 
 ```
 Telegram (texto o voz) → transcripción (Groq Whisper) → Claude (tool use) → Notion
+                                                                           ↘ GPT (redacción)
 ```
 
-### Flujo del webhook
+### Flujo del contact-api
 
 ```
-Portfolio (POST /leads) → webhook → Notion (DB Leads)
+Portfolio (POST /contact) → contact-api → Notion (DB Leads) + Email
 ```
 
 ## Comandos
@@ -41,8 +47,8 @@ Portfolio (POST /leads) → webhook → Notion (DB Leads)
 ```bash
 pnpm agent:dev      # Arrancar el agente en modo watch
 pnpm agent:start    # Arrancar el agente en producción
-pnpm webhook:dev    # Arrancar el webhook en modo watch
-pnpm webhook:start  # Arrancar el webhook en producción
+pnpm contact-api:dev    # Arrancar la contact-api en modo watch
+pnpm contact-api:start  # Arrancar la contact-api en producción
 ```
 
 ## Bases de datos de Notion

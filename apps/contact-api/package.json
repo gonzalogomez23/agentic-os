@@ -1,8 +1,8 @@
 {
-  "name": "webhook",
+  "name": "contact-api",
   "version": "0.1.0",
   "private": true,
-  "description": "Servidor de webhook para el formulario de captación de leads",
+  "description": "API de contacto para el formulario del portfolio",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
@@ -13,6 +13,8 @@
     "@notionhq/client": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
-    "express": "^4.19.0"
+    "express": "^4.19.0",
+    "express-rate-limit": "^7.0.0",
+    "resend": "^6.12.4"
   }
 }

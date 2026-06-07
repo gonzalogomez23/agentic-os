@@ -149,3 +149,81 @@ export async function archivePage(pageId) {
   await notion.pages.update({ page_id: pageId, archived: true });
   return { success: true };
 }
+
+/* ── Contenido de páginas (bloques) ── */
+
+function rtNode(content, annotations) {
+  return { type: 'text', text: { content }, annotations };
+}
+
+function parseInline(text) {
+  const segments = [];
+  // Orden importante: ** antes de * para no confundirlos
+  const re = /(\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_|~~(.+?)~~|`(.+?)`|([^*_~`]+))/gs;
+  for (const m of text.matchAll(re)) {
+    if (m[2])      segments.push(rtNode(m[2], { bold: true }));
+    else if (m[3]) segments.push(rtNode(m[3], { italic: true }));
+    else if (m[4]) segments.push(rtNode(m[4], { italic: true }));
+    else if (m[5]) segments.push(rtNode(m[5], { strikethrough: true }));
+    else if (m[6]) segments.push(rtNode(m[6], { code: true }));
+    else if (m[7]) segments.push(rtNode(m[7], {}));
+  }
+  return segments.length ? segments : [rtNode(text, {})];
+}
+
+function markdownToBlocks(text) {
+  const blocks = [];
+  for (const line of text.split('\n')) {
+    if (line.startsWith('### ')) {
+      blocks.push({ type: 'heading_3', heading_3: { rich_text: parseInline(line.slice(4)) } });
+    } else if (line.startsWith('## ')) {
+      blocks.push({ type: 'heading_2', heading_2: { rich_text: parseInline(line.slice(3)) } });
+    } else if (line.startsWith('# ')) {
+      blocks.push({ type: 'heading_1', heading_1: { rich_text: parseInline(line.slice(2)) } });
+    } else if (line.startsWith('> ')) {
+      blocks.push({ type: 'quote', quote: { rich_text: parseInline(line.slice(2)) } });
+    } else if (/^[-*] /.test(line)) {
+      blocks.push({ type: 'bulleted_list_item', bulleted_list_item: { rich_text: parseInline(line.slice(2)) } });
+    } else if (/^\d+\. /.test(line)) {
+      blocks.push({ type: 'numbered_list_item', numbered_list_item: { rich_text: parseInline(line.replace(/^\d+\. /, '')) } });
+    } else if (line.trim() === '---') {
+      blocks.push({ type: 'divider', divider: {} });
+    } else if (line.trim()) {
+      blocks.push({ type: 'paragraph', paragraph: { rich_text: parseInline(line) } });
+    }
+  }
+  return blocks;
+}
+
+function blocksToText(blocks) {
+  return blocks
+    .map((b) => {
+      const getText = (arr) => arr?.map((t) => t.plain_text).join('') || '';
+      switch (b.type) {
+        case 'heading_1': return `# ${getText(b.heading_1.rich_text)}`;
+        case 'heading_2': return `## ${getText(b.heading_2.rich_text)}`;
+        case 'heading_3': return `### ${getText(b.heading_3.rich_text)}`;
+        case 'quote': return `> ${getText(b.quote.rich_text)}`;
+        case 'bulleted_list_item': return `- ${getText(b.bulleted_list_item.rich_text)}`;
+        case 'numbered_list_item': return `1. ${getText(b.numbered_list_item.rich_text)}`;
+        case 'divider': return '---';
+        case 'paragraph': return getText(b.paragraph.rich_text);
+        default: return '';
+      }
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+export async function appendPageContent(pageId, markdownText) {
+  const blocks = markdownToBlocks(markdownText);
+  if (blocks.length === 0) return { success: true, blocks_added: 0 };
+  await notion.blocks.children.append({ block_id: pageId, children: blocks });
+  return { success: true, blocks_added: blocks.length };
+}
+
+export async function getPageContent(pageId) {
+  const response = await notion.blocks.children.list({ block_id: pageId, page_size: 100 });
+  const content = blocksToText(response.results);
+  return { content: content || '(página sin contenido)' };
+}

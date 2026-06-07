@@ -6,7 +6,7 @@
   "scripts": {
     "agent:dev":     "node --watch apps/telegram-agent/src/index.js",
     "agent:start":   "node apps/telegram-agent/src/index.js",
-    "webhook:dev":   "node --watch apps/webhook/src/server.js",
-    "webhook:start": "node apps/webhook/src/server.js"
+    "contact-api:dev":   "node --watch apps/contact-api/src/server.js",
+    "contact-api:start": "node apps/contact-api/src/server.js"
   }
 }
