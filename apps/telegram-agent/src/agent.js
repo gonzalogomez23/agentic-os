@@ -3,33 +3,43 @@ import { config } from './config.js';
 import { schemas } from './schema.js';
 import { tools, dispatch } from './tools.js';
 import { loadHistories, saveHistories } from './history.js';
+import { queryDatabase, getPageContent } from './notion.js';
 
 const client = new Anthropic({ apiKey: config.anthropicApiKey });
 
-const DB_DESCRIPTIONS = {
-  tasks:     'Tareas del día a día: trabajo pendiente, en curso o completado.',
-  projects:  'Proyectos con clientes: seguimiento de estado, fechas e importe.',
-  content:   'Contenido para publicar: posts, artículos, vídeos — ideas y programación.',
-  knowledge: 'Base de conocimiento personal: notas, aprendizajes, referencias.',
-  contacts:  'Contactos y leads: personas interesadas en los servicios o colaboraciones.',
-};
+let cachedContext = '';
+
+export async function initContext() {
+  if (!schemas.knowledge) return;
+  try {
+    const pages = await queryDatabase('knowledge', { search: 'Instrucciones' });
+    if (!pages.length) return;
+    const { content } = await getPageContent(pages[0].id);
+    if (content && content !== '(página sin contenido)') {
+      cachedContext = content;
+      console.log('[agent] Contexto cargado desde knowledge');
+    }
+  } catch (err) {
+    console.warn('[agent] No se pudo cargar el contexto:', err.message);
+  }
+}
 
 function buildSystemPrompt() {
   const dbList = Object.entries(schemas)
-    .map(([key, schema]) => {
-      const desc = DB_DESCRIPTIONS[key] || '';
+    .map(([, schema]) => {
       const fields = Object.keys(schema.properties).join(', ');
-      return `- **${schema.label}** — ${desc} Campos: ${fields}`;
+      return `- **${schema.label}** — campos: ${fields}`;
     })
     .join('\n');
 
-  return `Eres un asistente personal que gestiona bases de datos de Notion para un negocio freelance.
+  const contextSection = cachedContext ? `${cachedContext}\n\n---\n\n` : '';
+
+  return `${contextSection}Gestionas bases de datos de Notion mediante herramientas.
 
 Bases de datos disponibles:
 ${dbList}
 
 Instrucciones generales:
-- Responde siempre en español de España (tuteo).
 - Sé conciso y directo en tus respuestas.
 - Cuando necesites actualizar o eliminar un registro, primero usa la herramienta list_ para encontrar el page_id.
 - Si el usuario da una fecha relativa (ej: "mañana", "el viernes"), calcula la fecha absoluta. Hoy es ${new Date().toISOString().split('T')[0]}.
@@ -41,6 +51,10 @@ Instrucciones generales:
 
 Redacción de contenido:
 - Para cualquier tarea de redacción (posts, emails, copy, newsletters), usa siempre la herramienta draft_content — no redactes tú mismo.
+- Antes de redactar contenido nuevo, consulta el contexto existente en Notion:
+  1. Usa las herramientas de listado disponibles para obtener registros recientes del mismo tipo de contenido.
+  2. Busca entre las bases de datos disponibles páginas con guías de estilo, instrucciones de voz o ejemplos; si las encuentras, léelas con read_page_content.
+  3. Incluye ese contexto en el prompt que pases a draft_content para mantener coherencia de tono y evitar repeticiones.
 - Tras recibir el borrador de draft_content, preséntalo al usuario tal cual y pregunta si quiere ajustes o guardarlo.
 - Para guardarlo en Notion: busca primero el registro con list_*, obtén el page_id, luego usa write_page_content.
 - Para editar contenido existente, lee primero con read_page_content, luego redacta la versión revisada con draft_content y guárdala.

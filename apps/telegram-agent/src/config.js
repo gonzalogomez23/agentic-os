@@ -28,7 +28,7 @@ export const config = {
   claudeModel:     process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
   openaiApiKey:    process.env.OPENAI_API_KEY,
   gptModel:        process.env.GPT_MODEL || 'gpt-4.1',
-  notionApiKey:    process.env.NOTION_API_KEY,
+  notionApiKey: process.env.NOTION_API_KEY,
   notionDbs: {
     tasks:     process.env.NOTION_DB_TASKS,
     projects:  process.env.NOTION_DB_PROJECTS,

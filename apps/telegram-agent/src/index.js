@@ -1,10 +1,10 @@
 import { Bot } from 'grammy';
 import { Client } from '@notionhq/client';
 import { config } from './config.js';
-import { loadSchemas } from './schema.js';
+import { loadSchemas, schemas } from './schema.js';
 import { initTools } from './tools.js';
 import { transcribe } from './transcribe.js';
-import { runAgent } from './agent.js';
+import { runAgent, initContext } from './agent.js';
 
 const bot = new Bot(config.telegramToken);
 
@@ -43,34 +43,13 @@ bot.use(async (ctx, next) => {
 });
 
 bot.command('start', async (ctx) => {
-  await ctx.reply(
-    '¡Hola! Soy tu asistente personal. Envíame una nota de voz o un mensaje de texto y gestionaré tus bases de datos de Notion.\n\nEscribe /ayuda para ver lo que puedo hacer.',
-  );
+  await ctx.reply('Envíame un mensaje de texto o una nota de voz. Escribe /ayuda para ver lo que puedo hacer.');
 });
 
 bot.command('ayuda', async (ctx) => {
+  const dbLines = Object.values(schemas).map(s => `• ${s.label}`).join('\n');
   await ctx.reply(
-    `Soy tu asistente personal para gestionar tu negocio freelance.
-
-Bases de datos de Notion:
-• Tareas — crea, lista y actualiza trabajo pendiente
-• Proyectos — seguimiento de clientes, fechas e importes
-• Contenido — ideas y programación de posts y vídeos
-• Conocimiento — notas y aprendizajes personales
-• Contactos — leads y personas de interés
-
-Redacción con IA:
-• "Escríbeme un post de LinkedIn sobre productividad freelance"
-• "Redacta un email de seguimiento para el cliente Acme"
-• "Guarda el borrador en la idea X de Notion"
-
-Otros ejemplos:
-• "Crea una tarea para revisar la propuesta del cliente Acme, vence el viernes"
-• "Lista mis tareas en curso"
-• "Añade un proyecto: Web Acme, cliente Acme S.L., importe 2000€"
-• "Marca el proyecto Web Acme como entregado"
-
-Puedes enviar texto, notas de voz o imágenes.`,
+    `Bases de datos disponibles:\n${dbLines}\n\nRedacción con IA:\n• Pídeme que escriba posts, emails, newsletters u otro contenido\n\nPuedes enviarme texto, notas de voz o imágenes.`,
   );
 });
 
@@ -136,6 +115,7 @@ bot.on('message:text', async (ctx) => {
 
 const notion = new Client({ auth: config.notionApiKey });
 await loadSchemas(notion, config.notionDbs);
+await initContext();
 initTools();
 
 bot.start({ onStart: () => console.log('Bot de Telegram iniciado') });
