@@ -5,6 +5,7 @@ import { loadSchemas, schemas } from './schema.js';
 import { initTools } from './tools.js';
 import { transcribe } from './transcribe.js';
 import { runAgent, initContext } from './agent.js';
+import { generalContext, platformTones } from './context.js';
 
 const bot = new Bot(config.telegramToken);
 
@@ -50,6 +51,20 @@ bot.command('ayuda', async (ctx) => {
   const dbLines = Object.values(schemas).map(s => `• ${s.label}`).join('\n');
   await ctx.reply(
     `Bases de datos disponibles:\n${dbLines}\n\nRedacción con IA:\n• Pídeme que escriba posts, emails, newsletters u otro contenido\n\nPuedes enviarme texto, notas de voz o imágenes.`,
+  );
+});
+
+bot.command('contexto', async (ctx) => {
+  const wordCount = generalContext.split(/\s+/).filter(Boolean).length;
+  const platforms = Object.keys(platformTones);
+  const generalStatus = generalContext
+    ? `✅ ${wordCount} palabras`
+    : '❌ No cargado';
+  const platformStatus = platforms.length
+    ? `✅ ${platforms.join(', ')}`
+    : '❌ Ninguno';
+  await ctx.reply(
+    `Estado del contexto:\n\nGeneral: ${generalStatus}\nTonos de plataforma: ${platformStatus}`,
   );
 });
 

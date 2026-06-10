@@ -12,18 +12,23 @@ export async function initContext() {
   if (!schemas.knowledge) return;
   try {
     const pages = await queryDatabase('knowledge', {});
+    const titleKey = Object.entries(schemas.knowledge.properties).find(([, def]) => def.type === 'title')?.[0];
     for (const page of pages) {
       const { content } = await getPageContent(page.id);
       if (!content || content === '(página sin contenido)') continue;
       const type = page.type;
+      const name = (titleKey && page[titleKey]) || page.id;
       if (!type || type === 'Base knowledge') {
         appendGeneralContext(content);
+        console.log(`[agent] knowledge: "${name}" → general`);
       } else {
         setPlatformTone(type, content);
+        console.log(`[agent] knowledge: "${name}" → ${type}`);
       }
     }
+    const wordCount = generalContext.split(/\s+/).filter(Boolean).length;
     const platforms = Object.keys(platformTones);
-    console.log(`[agent] Contexto cargado — general: ${!!generalContext}, plataformas: ${platforms.join(', ') || 'ninguna'}`);
+    console.log(`[agent] Contexto listo — general: ${wordCount} palabras, plataformas: ${platforms.join(', ') || 'ninguna'}`);
   } catch (err) {
     console.warn('[agent] No se pudo cargar el contexto:', err.message);
   }
@@ -53,14 +58,17 @@ Instrucciones generales:
 - Si no entiendes la intención, pide aclaración.
 - Nunca inventes datos: si el usuario no menciona un campo, no lo rellenes.
 - Para campos con opciones predefinidas (categorías, canal, estado, etc.), usa únicamente los valores de la lista. Si ninguno encaja, deja el campo vacío — nunca uses un valor que no esté en la lista.
+- No confirmes ninguna acción hasta recibir la respuesta de la herramienta correspondiente.
+- No hagas referencia a borradores, textos o cambios que no hayas presentado explícitamente en este mismo turno.
+- Si una herramienta devuelve un error, comunícaselo al usuario en lugar de ignorarlo.
 
 Redacción de contenido:
 - Para cualquier tarea de redacción (posts, emails, copy, proposals), usa siempre la herramienta draft_content — no redactes tú mismo.
 - Identifica siempre la plataforma de destino (linkedin, upwork, email, website…) y pásala en el campo platform. El tono y el contexto general se inyectan automáticamente.
 - Antes de llamar a draft_content, busca ejemplos de contenido anterior de esa misma plataforma:
-  1. Usa list_content (u otras DBs relevantes) filtrando por la plataforma o canal correspondiente para obtener entradas recientes.
+  1. Usa list_content filtrando por el campo que contenga la plataforma como valor (revisa el schema de la DB content para identificar el campo correcto — busca el que tenga opciones como "Linkedin", "Upwork", etc.).
   2. Lee el cuerpo de los 2-3 más recientes con read_page_content.
-  3. Pásalos en el campo context de draft_content como ejemplos de estilo propio, para que el redactor mantenga coherencia y evite repetirse.
+  3. Pásalos en el campo context de draft_content como ejemplos de estilo real, para mantener coherencia y evitar repeticiones.
 - Si no existe contenido previo para esa plataforma, omite el paso y llama a draft_content directamente.
 - Tras recibir el borrador de draft_content, preséntalo al usuario tal cual y pregunta si quiere ajustes o guardarlo.
 - Para guardarlo en Notion: busca primero el registro con list_*, obtén el page_id, luego usa write_page_content.
@@ -142,6 +150,8 @@ export async function runAgent(userText, chatId, image = null) {
     messages.push({ role: 'user', content: toolResults });
   }
 
+  const errorMsg = 'Se alcanzó el límite de iteraciones. Inténtalo con una petición más simple.';
+  history.push({ role: 'assistant', content: errorMsg });
   saveHistories(histories);
-  return 'Se alcanzó el límite de iteraciones. Inténtalo con una petición más simple.';
+  return errorMsg;
 }
