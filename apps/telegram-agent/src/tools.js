@@ -1,7 +1,7 @@
 import { schemas } from './schema.js';
 import { createPage, queryDatabase, updatePage, archivePage, appendPageContent, getPageContent } from './notion.js';
 import { draftWithGPT } from './writer.js';
-import { platformTones } from './context.js';
+import { platformTones, getKnowledgeForPlatform } from './context.js';
 
 function propsToSchema(dbKey, includeId) {
   const schema = schemas[dbKey];
@@ -148,6 +148,20 @@ function makeTools() {
     },
   });
 
+  tools.push({
+    name: 'get_knowledge',
+    description: 'Devuelve el contexto de conocimiento del negocio: perfil profesional, servicios, voz y posicionamiento. Si se indica platform, incluye también el tono específico de esa plataforma. Úsala antes de redactar o cuando necesites contexto sobre el negocio.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        platform: platformKeys.length
+          ? { type: 'string', description: 'Plataforma para incluir su tono específico', enum: platformKeys }
+          : { type: 'string', description: 'Plataforma para incluir su tono específico (ej: Linkedin, Upwork, Website)' },
+      },
+      required: [],
+    },
+  });
+
   return tools;
 }
 
@@ -161,6 +175,7 @@ export async function dispatch(name, input) {
   if (name === 'draft_content')      return draftWithGPT(input.prompt, input.context, input.platform);
   if (name === 'write_page_content') return appendPageContent(input.page_id, input.content);
   if (name === 'read_page_content')  return getPageContent(input.page_id);
+  if (name === 'get_knowledge')      return { context: getKnowledgeForPlatform(input.platform) };
 
   const match = name.match(/^(create|list|update|delete)_(\w+)$/);
   if (!match) throw new Error(`Tool desconocida: ${name}`);
