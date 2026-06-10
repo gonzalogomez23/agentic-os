@@ -4,21 +4,26 @@ import { schemas } from './schema.js';
 import { tools, dispatch } from './tools.js';
 import { loadHistories, saveHistories } from './history.js';
 import { queryDatabase, getPageContent } from './notion.js';
+import { appendGeneralContext, setPlatformTone, generalContext, platformTones } from './context.js';
 
 const client = new Anthropic({ apiKey: config.anthropicApiKey });
-
-let cachedContext = '';
 
 export async function initContext() {
   if (!schemas.knowledge) return;
   try {
-    const pages = await queryDatabase('knowledge', { search: 'Instrucciones' });
-    if (!pages.length) return;
-    const { content } = await getPageContent(pages[0].id);
-    if (content && content !== '(página sin contenido)') {
-      cachedContext = content;
-      console.log('[agent] Contexto cargado desde knowledge');
+    const pages = await queryDatabase('knowledge', {});
+    for (const page of pages) {
+      const { content } = await getPageContent(page.id);
+      if (!content || content === '(página sin contenido)') continue;
+      const type = page.type;
+      if (!type || type === 'Base knowledge') {
+        appendGeneralContext(content);
+      } else {
+        setPlatformTone(type, content);
+      }
     }
+    const platforms = Object.keys(platformTones);
+    console.log(`[agent] Contexto cargado — general: ${!!generalContext}, plataformas: ${platforms.join(', ') || 'ninguna'}`);
   } catch (err) {
     console.warn('[agent] No se pudo cargar el contexto:', err.message);
   }
@@ -32,7 +37,7 @@ function buildSystemPrompt() {
     })
     .join('\n');
 
-  const contextSection = cachedContext ? `${cachedContext}\n\n---\n\n` : '';
+  const contextSection = generalContext ? `${generalContext}\n\n---\n\n` : '';
 
   return `${contextSection}Gestionas bases de datos de Notion mediante herramientas.
 
@@ -50,11 +55,13 @@ Instrucciones generales:
 - Para campos con opciones predefinidas (categorías, canal, estado, etc.), usa únicamente los valores de la lista. Si ninguno encaja, deja el campo vacío — nunca uses un valor que no esté en la lista.
 
 Redacción de contenido:
-- Para cualquier tarea de redacción (posts, emails, copy, newsletters), usa siempre la herramienta draft_content — no redactes tú mismo.
-- Antes de redactar contenido nuevo, consulta el contexto existente en Notion:
-  1. Usa las herramientas de listado disponibles para obtener registros recientes del mismo tipo de contenido.
-  2. Busca entre las bases de datos disponibles páginas con guías de estilo, instrucciones de voz o ejemplos; si las encuentras, léelas con read_page_content.
-  3. Incluye ese contexto en el prompt que pases a draft_content para mantener coherencia de tono y evitar repeticiones.
+- Para cualquier tarea de redacción (posts, emails, copy, proposals), usa siempre la herramienta draft_content — no redactes tú mismo.
+- Identifica siempre la plataforma de destino (linkedin, upwork, email, website…) y pásala en el campo platform. El tono y el contexto general se inyectan automáticamente.
+- Antes de llamar a draft_content, busca ejemplos de contenido anterior de esa misma plataforma:
+  1. Usa list_content (u otras DBs relevantes) filtrando por la plataforma o canal correspondiente para obtener entradas recientes.
+  2. Lee el cuerpo de los 2-3 más recientes con read_page_content.
+  3. Pásalos en el campo context de draft_content como ejemplos de estilo propio, para que el redactor mantenga coherencia y evite repetirse.
+- Si no existe contenido previo para esa plataforma, omite el paso y llama a draft_content directamente.
 - Tras recibir el borrador de draft_content, preséntalo al usuario tal cual y pregunta si quiere ajustes o guardarlo.
 - Para guardarlo en Notion: busca primero el registro con list_*, obtén el page_id, luego usa write_page_content.
 - Para editar contenido existente, lee primero con read_page_content, luego redacta la versión revisada con draft_content y guárdala.

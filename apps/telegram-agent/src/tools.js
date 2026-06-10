@@ -1,6 +1,7 @@
 import { schemas } from './schema.js';
 import { createPage, queryDatabase, updatePage, archivePage, appendPageContent, getPageContent } from './notion.js';
 import { draftWithGPT } from './writer.js';
+import { platformTones } from './context.js';
 
 function propsToSchema(dbKey, includeId) {
   const schema = schemas[dbKey];
@@ -103,16 +104,22 @@ function makeTools() {
     });
   }
 
+  const platformKeys = Object.keys(platformTones);
+  const platformProp = platformKeys.length
+    ? { type: 'string', description: 'Plataforma de destino del contenido', enum: platformKeys }
+    : { type: 'string', description: 'Plataforma de destino (ej: linkedin, upwork, email, instagram)' };
+
   tools.push({
     name: 'draft_content',
-    description: 'Usa GPT para redactar contenido: posts de LinkedIn/Instagram, emails, copy de web, newsletters... Describe qué quieres redactar y el modelo especializado lo escribirá.',
+    description: 'Usa GPT para redactar contenido: posts de LinkedIn/Instagram, emails, proposals de Upwork, newsletters... Incluye siempre el campo platform para aplicar el tono correcto.',
     input_schema: {
       type: 'object',
       properties: {
-        prompt:  { type: 'string', description: 'Qué redactar: tipo de contenido, tono, longitud, plataforma' },
-        context: { type: 'string', description: 'Contexto opcional: tema, audiencia, ejemplos de estilo propio' },
+        prompt:   { type: 'string', description: 'Qué redactar: tipo de contenido, tema, longitud' },
+        context:  { type: 'string', description: 'Contexto adicional: audiencia, detalles específicos del encargo' },
+        platform: platformProp,
       },
-      required: ['prompt'],
+      required: ['prompt', 'platform'],
     },
   });
 
@@ -151,7 +158,7 @@ export function initTools() {
 }
 
 export async function dispatch(name, input) {
-  if (name === 'draft_content')      return draftWithGPT(input.prompt, input.context);
+  if (name === 'draft_content')      return draftWithGPT(input.prompt, input.context, input.platform);
   if (name === 'write_page_content') return appendPageContent(input.page_id, input.content);
   if (name === 'read_page_content')  return getPageContent(input.page_id);
 

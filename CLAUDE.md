@@ -29,14 +29,25 @@ agentic-os/
 ### Agentes y modelos
 
 - **Claude** (claude-haiku-4-5) — organizador: interpreta peticiones, gestiona Notion (CRUD)
-- **GPT** (gpt-4o-mini) — redactor: posts, emails, copy, newsletters (tool `draft_content`)
+- **GPT** (gpt-4.1) — redactor: posts, emails, copy, proposals (tool `draft_content`)
 
 ### Flujo del agente
 
 ```
 Telegram (texto o voz) → transcripción (Groq Whisper) → Claude (tool use) → Notion
-                                                                           ↘ GPT (redacción)
+                                                                           ↘ GPT (redacción con tono de plataforma)
 ```
+
+### Contexto de redacción (knowledge DB)
+
+Al arrancar, el agente carga todas las páginas de la DB `knowledge` y las clasifica por su propiedad `Type`:
+
+- `Base knowledge` — contexto general (quién eres, servicios, clientes, guía de estilo base). Se inyecta en el system prompt de Claude y en todas las redacciones de GPT.
+- `Linkedin`, `Upwork`, `Website`, etc. — tono específico por plataforma. Se inyecta en GPT únicamente cuando `draft_content` se llama con ese `platform`.
+
+Cuando el usuario pide "redacta un post de LinkedIn sobre X" o "genera una proposal para Upwork", Claude detecta la plataforma automáticamente y la pasa a `draft_content`. GPT recibe entonces el contexto general + el tono de esa plataforma.
+
+Para añadir o modificar el tono de una plataforma, basta con editar la página correspondiente en Notion y reiniciar el agente. Para añadir una plataforma nueva, crear una página con el `Type` deseado — el enum de la tool se genera dinámicamente al arranque.
 
 ### Flujo del contact-api
 
