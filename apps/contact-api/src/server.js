@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Client } from '@notionhq/client';
 import { Resend } from 'resend';
-import { NewLeadEmail, render } from '@agentic-os/emails';
+import { NewLeadEmail, render, toPlainText } from '@agentic-os/emails';
 
 const REQUIRED = ['NOTION_API_KEY', 'NOTION_DB_CONTACTS', 'RESEND_API_KEY', 'TO_EMAIL', 'FROM_EMAIL'];
 const missing = REQUIRED.filter((k) => !process.env[k]);
@@ -90,6 +90,7 @@ app.post('/contact', contactLimiter, async (req, res) => {
         to: TO_EMAIL,
         subject: `Nuevo lead: ${nombre.trim()}`,
         html,
+        text: toPlainText(html),
       }))
       .catch((err) => console.error('Error al enviar email de notificación:', String(err.message).slice(0, 200)));
 

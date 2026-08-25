@@ -21,8 +21,8 @@ interface NewLeadEmailProps {
   mensaje?: string;
 }
 
-const LOGO_URL = 'https://www.gonzalogomezdev.com/logo/gonzalo-gomez-logo.png';
-const SITE_URL = 'https://gonzalogomezdev.com';
+const LOGO_URL = 'https://gonzalogomez.studio/logo/gonzalo-gomez-logo.png';
+const SITE_URL = 'https://gonzalogomez.studio';
 
 export function NewLeadEmail({ nombre, email, telefono, mensaje }: NewLeadEmailProps) {
   return (
@@ -88,7 +88,7 @@ export function NewLeadEmail({ nombre, email, telefono, mensaje }: NewLeadEmailP
           <Section style={footerSection}>
             <Text style={footer}>
               Recibido desde el formulario de contacto de{' '}
-              <Link href={SITE_URL} style={footerLink}>gonzalogomezdev.com</Link>
+              <Link href={SITE_URL} style={footerLink}>gonzalogomez.studio</Link>
             </Text>
           </Section>
 
