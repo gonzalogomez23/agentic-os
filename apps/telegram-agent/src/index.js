@@ -1,4 +1,6 @@
-import { Bot } from 'grammy';
+import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
+import { Bot, webhookCallback } from 'grammy';
 import { Client } from '@notionhq/client';
 import { config } from './config.js';
 import { loadSchemas, schemas } from './schema.js';
@@ -133,4 +135,25 @@ await loadSchemas(notion, config.notionDbs);
 await initContext();
 initTools();
 
-bot.start({ onStart: () => console.log('Bot de Telegram iniciado') });
+const PORT = process.env.PORT || 8080;
+
+if (config.publicUrl) {
+  // El token en la ruta actúa como secreto adicional — mismo modelo de confianza que telegramFileUrl().
+  const webhookPath = `/webhook/${config.telegramToken}`;
+  // Verifica la cabecera X-Telegram-Bot-Api-Secret-Token para que nadie pueda
+  // falsificar un Update (y su ctx.from.id) sin conocer este secreto derivado.
+  const secretToken = createHash('sha256').update(config.telegramToken).digest('hex');
+  await bot.api.setWebhook(`${config.publicUrl}${webhookPath}`, { secret_token: secretToken });
+  const handleUpdate = webhookCallback(bot, 'http', { secretToken });
+
+  createServer((req, res) => {
+    if (req.method === 'POST' && req.url === webhookPath) {
+      handleUpdate(req, res);
+      return;
+    }
+    res.writeHead(200).end('OK');
+  }).listen(PORT, () => console.log(`Bot de Telegram iniciado (webhook, puerto ${PORT})`));
+} else {
+  await bot.api.deleteWebhook();
+  bot.start({ onStart: () => console.log('Bot de Telegram iniciado (polling)') });
+}

@@ -27,6 +27,7 @@ export const config = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   claudeModel:     process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
   openaiApiKey:    process.env.OPENAI_API_KEY,
+  publicUrl:       process.env.PUBLIC_URL,
   gptModel:        process.env.GPT_MODEL || 'gpt-4.1',
   notionApiKey: process.env.NOTION_API_KEY,
   notionDbs: {
